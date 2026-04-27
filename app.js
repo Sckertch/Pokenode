@@ -85,7 +85,7 @@ app.post(
         await Pokemon.find({ name: req.body.name })
             .populate('types', "-__v")
             .select("-__v")
-            .then((pokemon) =>
+            .then(() =>
                 res.json(myReponse(res.statusCode, "Pokemon créé :", pokemonData))
         );
     },
@@ -113,23 +113,31 @@ app.patch("/pokemon/:_id",
 
 
         if (!errors.isEmpty()) {
-            console.log(errors);
+            console.error(errors);
             console.log('res.body: ',req.body)
             return res.status(422).json(errors);
         }
 
         let typeIds = [];
-
         if (Array.isArray(req.body.types)){
-            const typeNames = req.body.types; // ex: ["Plante", "Poison"]
+
+            let typeNames = req.body.types; // ex: ["Plante", "Poison"]
+            if (typeNames[0] === typeNames[1]){
+                console.log('typeName',typeNames[0]);
+                typeNames = Array(typeNames[0])
+            }
+
             const foundTypes = await Type.find({ name: { $in: typeNames } });
 
+            console.log('found type',foundTypes);
+            console.log('req body type',typeNames);
             if (foundTypes.length !== typeNames.length) {
-                return res.status(422).json({ errors: [{ msg: "Un ou plusieurs types sont invalides" }] });
+                return res.status(422).json(myReponse(res.statusCode, errors,errors));
             }
 
             typeIds = foundTypes.map(t => t._id);
         }
+
 
         const pokemonData = buildMongo(req.body, pokemonAllowedFields);
 
@@ -143,7 +151,7 @@ app.patch("/pokemon/:_id",
            pokemonData
        ).populate('types', "-__v")
            .select("-__v")
-           .then((pokemon) =>
+           .then(() =>
                res.json(myReponse(res.statusCode, "Pokémon modifié :",pokemonData))
            );
     },
@@ -160,7 +168,7 @@ app.delete("/pokemon/:_id", async (req, res) => {
             res.json(myReponse(res.statusCode, "Pokémon supprimé avec succes",pokemon)));
 })
 
-app.get("/types", async (req, res) => {
+app.get("/type", async (req, res) => {
     console.log("Let's get a types");
     Type.find().then((types) => {
         res.json(myReponse(res.statusCode, "Liste des types :",types));
